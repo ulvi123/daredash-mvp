@@ -6,10 +6,21 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "daredashapp",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0A0E27"
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.daredashApp.mvp",
+      "infoPlist": {
+        "NSCameraUsageDescription": "DARE needs camera access to capture challenge completion proof",
+        "NSPhotoLibraryUsageDescription": "DARE needs photo library access to select challenge completion proof",
+        "NSLocationWhenInUseUsageDescription": "DARE needs your location to verify location-based challenges"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -18,15 +29,42 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
+      "package": "com.daredashApp.mvp",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
+      "bundler": "metro",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow DARE to access your camera to capture challenge proof"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow DARE to access your photos to select challenge proof"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow DARE to use your location to verify location-based challenges"
+        }
+      ],
       [
         "expo-splash-screen",
         {
@@ -38,7 +76,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,
