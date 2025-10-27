@@ -1,32 +1,35 @@
-import { getAnalytics } from "firebase/analytics";
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, initializeAuth,getReactNativePersistence } from 'firebase/auth';
+import { initializeAuth, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getFunctions } from 'firebase/functions';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// Firebase config
 const firebaseConfig = {
-  apiKey: process.env.FIREBASE_API_KEY,
-  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.FIREBASE_PROJECT_ID,
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.FIREBASE_APP_ID,
-  measurementId: "G-X8XJMMTWJ5"
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
-const firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+// Initialize Firebase (only once)
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
+// Initialize Auth for Expo Go
+// Use browserLocalPersistence (works with Expo Go)
+const auth = initializeAuth(app, {
+  persistence: browserLocalPersistence,
+});
 
-const auth = initializeAuth(firebaseApp, {
-    persistence: getReactNativePersistence(AsyncStorage)
-  });
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Initialize Firestore
 const db = getFirestore(app);
+
+// Initialize Storage
 const storage = getStorage(app);
+
+// Initialize Functions
 const functions = getFunctions(app);
 
 export { app, auth, db, storage, functions };
