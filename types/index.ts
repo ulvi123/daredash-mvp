@@ -1,4 +1,4 @@
-export type UserRole = 'challnger' | 'doer' | 'both';
+export type UserRole = 'challenger' | 'doer' | 'both';
 export type AccountTier = 'free' | 'premium';
 
 
@@ -8,6 +8,8 @@ export interface User {
     displayName: string;
     avatarUtl?: string;
     role: UserRole;
+    photoURL?: string;
+    phoneNumber?: string;
     accountTier: AccountTier;
 
 
