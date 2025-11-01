@@ -2,9 +2,9 @@ export interface AIAnalysis {
     approved: boolean;
     overallRiskScore: number;
 
-    physicalSafetScore: number;
+    physicalSafetyScore: number;
     legalComplianceScore: number;
-    socialAppropriatnessScore: number;
+    socialAppropriatenessScore: number;
     privacyConcernsScore: number;
     
     flags: RiskFlag[];

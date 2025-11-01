@@ -1,3 +1,5 @@
+import { PURCHASE_PACKAGES, PurchasePackage } from "../../types/transaction";
+
 export const Config = {
     // App
     APP_NAME: 'DARE',
@@ -15,6 +17,38 @@ export const Config = {
       UNDER_90_DAYS: 10,
       OVER_90_DAYS: 5,
     },
+
+    PURCHASE_PACKAGES: [
+      {
+        id: 'starter',
+        name: 'Starter',
+        dcoins: 1000,
+        price: 12,
+        bonusPercentage: 0,
+      },
+      {
+        id: 'popular',
+        name: 'Popular',
+        dcoins: 5000,
+        price: 50,
+        bonusPercentage: 10,
+        isPopular: true,
+      },
+      {
+        id: 'pro',
+        name: 'Pro',
+        dcoins: 10000,
+        price: 85,
+        bonusPercentage: 15,
+      },
+      {
+        id: 'whale',
+        name: 'Whale',
+        dcoins: 25000,
+        price: 200,
+        bonusPercentage: 20,
+      },
+    ] as PurchasePackage[],
     
     // Challenge constraints
     MIN_CHALLENGE_STAKE: 500,
@@ -49,4 +83,7 @@ export const Config = {
     // Limits
     FREE_CHALLENGES_PER_MONTH: 3,
     PREMIUM_PRICE_USD: 9.99,
+
+    //pURCHASE PACKAGE
+
   };

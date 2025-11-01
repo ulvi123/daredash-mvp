@@ -34,4 +34,6 @@ export interface User {
     createdAt: Date;
     lastActiveAt: Date;
     premiumUntil?: Date;
+
+    
 }

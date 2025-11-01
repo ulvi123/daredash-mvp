@@ -30,7 +30,7 @@ export type PrizeModel =
     | 'time_decay'
 
 
-export interface Challenege {
+export interface Challenge {
     id: string;
 
     //Creator info
