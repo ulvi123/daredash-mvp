@@ -21,7 +21,7 @@ import { PurchasePackage } from '../../types/transaction';
 import { TransactionType } from '../../types/transaction';
 // import {Transaction, TransactionType, User} from "../../types"
 
-export class Tokenservice {
+export class TokenService {
     //add Dcoins to user balance
 
     static async addDCoins(

@@ -49,7 +49,7 @@ export interface Challenge {
     stakeAmount: number;
     platformFee: number;
     prizePool: number;
-    prizemodel: PrizeModel;
+    prizeModel: PrizeModel;
     maxCompletions?: number;
 
     //Moderation
