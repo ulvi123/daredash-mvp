@@ -41,9 +41,9 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="activity"
+        name="watch"
         options={{
-          title: 'Activity',
+          title: 'Watch',
           tabBarIcon: ({ color, size }) => (
             <TabIcon icon="⚡" color={color} size={size} />
           ),

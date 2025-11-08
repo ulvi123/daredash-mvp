@@ -11,6 +11,10 @@ import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firest
 import { auth, db } from "../firebase/config";
 import { Collections } from './collections';
 import { User, UserRole } from "../../types/index";
+import { TokenService } from './token.service';
+
+
+const WELCOME_BONUS_DCOINS = 100;
 
 
 export class AuthService {
@@ -43,8 +47,8 @@ export class AuthService {
 
 
                 //Initializing the token balance
-                dcoins: 0,
-                dcoinsLifeTimeEarned: 0,
+                dcoins: WELCOME_BONUS_DCOINS,
+                dcoinsLifeTimeEarned: WELCOME_BONUS_DCOINS,
                 dcoinsLifeTimeSpent: 0,
 
 
@@ -66,6 +70,11 @@ export class AuthService {
                 createdAt: serverTimestamp(),
                 lastActiveAt: serverTimestamp(),
             })
+
+            await TokenService.createWelcomeBonusTransaction(
+                userCredential.user.uid,
+                WELCOME_BONUS_DCOINS
+            )
 
 
             return newUser;

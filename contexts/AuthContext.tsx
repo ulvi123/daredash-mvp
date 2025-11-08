@@ -51,6 +51,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   ) => {
     const userData = await AuthService.signUp(email, password, displayName, role);
     setUser(userData);
+    //Refresh to get custom claims
+    await refreshUser();
   };
 
   const signOut = async () => {

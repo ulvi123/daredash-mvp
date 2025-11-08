@@ -30,7 +30,7 @@ export type PrizeModel =
     | 'time_decay'
 
 
-export interface Challenege {
+export interface Challenge {
     id: string;
 
     //Creator info
@@ -49,7 +49,7 @@ export interface Challenege {
     stakeAmount: number;
     platformFee: number;
     prizePool: number;
-    prizemodel: PrizeModel;
+    prizeModel: PrizeModel;
     maxCompletions?: number;
 
     //Moderation
