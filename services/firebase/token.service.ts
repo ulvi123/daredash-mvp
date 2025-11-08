@@ -9,6 +9,7 @@ import {
     orderBy,
     limit,
     getDocs,
+    setDoc,
     serverTimestamp,
     increment,
     runTransaction
@@ -22,8 +23,32 @@ import { TransactionType } from '../../types/transaction';
 // import {Transaction, TransactionType, User} from "../../types"
 
 export class TokenService {
-    //add Dcoins to user balance
+    //Creating welcoming bonus
+    static async createWelcomeBonusTransaction(
+        userId: string,
+        amount: number
+    ): Promise<void> {
+        try {
+            const transactionRef = doc(collection(db,Collections.TRANSACTIONS))
+            await setDoc(transactionRef,{
+                id:transactionRef.id,
+                userId,
+                type: 'bonus' as TransactionType,
+                amount,
+                balanceAfter: amount,
+                description:'🎉 Welcome bonus! Start creating and completing challenges!',
+                metadata: {
+                    bonusType: 'welcome_bonus',
+                    source:'signup'
+                },
+                createdAt:serverTimestamp()
+            })
+        } catch (error) {
+            console.error('Error creating welcome bonus transaction: ', error)
+        }
+    }
 
+    //Add Dcoins to user balance
     static async addDCoins(
         userId: string,
         amount: number,
@@ -155,8 +180,6 @@ export class TokenService {
             }
         )
     }
-
-
 
     /**
        * Transfer DCoins between users (for challenge rewards)

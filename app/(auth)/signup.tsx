@@ -72,6 +72,15 @@ export default function SignupScreen() {
       setLoading(true);
       await signUp(email, password, displayName, selectedRole);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+      //Showing here the welcoming message
+
+      Alert.alert(
+        '🎉 Welcome to DareDash!',
+        'Your account has been created successfully! You received 100 free DCoins to get started!',
+        [{ text: 'Let\'s Go!', style: 'default' }]
+      );
+
       // Navigation handled by RootLayout
     } catch (error: any) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
