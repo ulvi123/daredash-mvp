@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
+import { Auth, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { auth } from '../services/firebase/config';
 import { AuthService } from '../services/firebase/auth.service';
 import { User, UserRole } from '../types';
@@ -56,8 +56,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    await AuthService.signOut();
-    setUser(null);
+    try {
+      await firebaseSignOut(auth);
+      setUser(null);
+      console.log('User signed out successfully');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      throw error;
+    }
   };
 
   const refreshUser = async () => {
@@ -81,3 +87,5 @@ export function useAuth() {
   }
   return context;
 }
+
+// Removed the unused firebaseSignOut function as it is no longer needed.

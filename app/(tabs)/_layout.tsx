@@ -1,5 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Colors } from '../../utils/constants/themes';
+import { Ionicons } from '@expo/vector-icons';
+
 
 export default function TabsLayout() {
   return (
@@ -22,12 +24,16 @@ export default function TabsLayout() {
         },
       }}
     >
-      <Tabs.Screen
+       <Tabs.Screen
         name="index"
         options={{
           title: 'Feed',
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon icon="🏠" color={color} size={size} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons 
+              name={focused ? 'home' : 'home-outline'} 
+              size={24} 
+              color={color} 
+            />
           ),
         }}
       />
@@ -35,8 +41,12 @@ export default function TabsLayout() {
         name="create"
         options={{
           title: 'Create',
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon icon="➕" color={color} size={size} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons 
+              name={focused ? 'add-circle' : 'add-circle-outline'} 
+              size={28} 
+              color={color} 
+            />
           ),
         }}
       />
@@ -44,8 +54,12 @@ export default function TabsLayout() {
         name="watch"
         options={{
           title: 'Watch',
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon icon="⚡" color={color} size={size} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons 
+              name={focused ? 'play-circle' : 'play-circle-outline'} 
+              size={24} 
+              color={color} 
+            />
           ),
         }}
       />
@@ -53,12 +67,30 @@ export default function TabsLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon icon="👤" color={color} size={size} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons 
+              name={focused ? 'person' : 'person-outline'} 
+              size={24} 
+              color={color} 
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="stream"
+        options={{
+          title: 'Stream',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons 
+              name={focused ? 'videocam' : 'videocam-outline'} 
+              size={24} 
+              color={color} 
+            />
           ),
         }}
       />
     </Tabs>
+    
   );
 }
 
