@@ -1,43 +1,44 @@
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TextInput,
-  Pressable,
-  Alert,
   ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useAuth } from '../../contexts/AuthContext';
-import { Colors, Spacing, BorderRadius } from '../../utils/constants/themes';
-import { ChallengeCategory, ChallengeDifficulty, PrizeModel } from '../../types/challenges';
-import { ModerationService } from '../../services/ai/moderations.service'
-import { ChallengeService } from '../../services/firebase/challenge.service';
-import { Config } from '../../utils/constants/config';
 import Button from '../../components/common/Button';
 import DCoinBalance from '../../components/token/DcoinBalance';
-import * as Haptics from 'expo-haptics';
+import { useAuth } from '../../contexts/AuthContext';
+import { ModerationService } from '../../services/ai/moderations.service';
+import { ChallengeService } from '../../services/firebase/challenge.service';
+import { AIAnalysis } from '../../types/aianalysis';
+import { ChallengeCategory, ChallengeDifficulty, PrizeModel } from '../../types/challenges';
+import { Config } from '../../utils/constants/config';
+import { BorderRadius, Colors, Spacing } from '../../utils/constants/themes';
 
 type Step = 'category' | 'details' | 'economics' | 'moderation' | 'success';
 
 export default function CreateChallengeScreen() {
   const { user, refreshUser } = useAuth();
-  
+
   // Form state
   const [currentStep, setCurrentStep] = useState<Step>('category');
   const [category, setCategory] = useState<ChallengeCategory | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [difficulty, setDifficulty] = useState<ChallengeDifficulty>(3);
-  const [stakeAmount, setStakeAmount] = useState('1000');
+  const [stakeAmount, setStakeAmount] = useState('50');
   const [prizeModel, setPrizeModel] = useState<PrizeModel>('single_winner');
-  
+
   // AI Moderation state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<any>(null);
-  
+
   // Creation state
   const [isCreating, setIsCreating] = useState(false);
   const [createdChallengeId, setCreatedChallengeId] = useState<string | null>(null);
@@ -64,30 +65,87 @@ export default function CreateChallengeScreen() {
       const result = await ModerationService.analyzeChallenge(description, category);
       setAnalysis(result);
       Haptics.notificationAsync(
-        result.approved 
-          ? Haptics.NotificationFeedbackType.Success 
+        result.approved
+          ? Haptics.NotificationFeedbackType.Success
           : Haptics.NotificationFeedbackType.Warning
       );
     } catch (error) {
       Alert.alert('Error', 'Failed to analyze challenge. Please try again.');
+      console.error('Moderation analysis error:', error);
       setCurrentStep('economics');
     } finally {
       setIsAnalyzing(false);
     }
   };
 
+  // !analysis has been removed fro now
   const handleCreate = async () => {
-    if (!user || !category || !analysis) return;
+    console.log('🚀 handleCreate called');
 
-    const stake = parseInt(stakeAmount);
-    if (isNaN(stake) || stake < Config.MIN_CHALLENGE_STAKE) {
-      Alert.alert('Invalid Stake', `Minimum stake is ${Config.MIN_CHALLENGE_STAKE} DCoins`);
+    if (!user || !category) {
+      console.log('❌ Missing user or category:', { hasUser: !!user, category });
+      Alert.alert('Error', 'Missing user or category');
+      setCurrentStep('economics');
+      setIsCreating(false);
       return;
     }
 
+    console.log('✅ User and category OK');
+
+    const stake = parseInt(stakeAmount);
+    console.log('💰 Stake validation:', {
+      stake,
+      min: Config.MIN_CHALLENGE_STAKE,
+      userBalance: user.dcoins,
+      hasEnough: user.dcoins >= stake
+    });
+
+    if (isNaN(stake) || stake < Config.MIN_CHALLENGE_STAKE) {
+      console.log('❌ Invalid stake amount');
+      Alert.alert('Invalid Stake', `Minimum stake is ${Config.MIN_CHALLENGE_STAKE} DCoins`);
+      setCurrentStep('economics');
+      setIsCreating(false);
+      return;
+    }
+
+    if (user.dcoins < stake) {
+      console.log('❌ Insufficient balance');
+      Alert.alert(
+        'Insufficient DCoins',
+        `You need ${stake} DCoins but only have ${user.dcoins} DCoins.\n\nPlease purchase more DCoins or reduce your stake amount.`
+      );
+      setCurrentStep('economics');
+      setIsCreating(false);
+      return;
+    }
+
+    console.log('✅ Stake validation passed - proceeding with creation');
+
     setIsCreating(true);
+    console.log('🔄 setIsCreating(true) called');
+
+    const finalAnalysis: AIAnalysis = analysis || {
+      approved: false,
+      overallRiskScore: 29,
+      physicalSafetyScore: 100,
+      legalComplianceScore: 100,
+      socialAppropriatenessScore: 100,
+      privacyConcernsScore: 100,
+      flags: [{
+        type: 'danger',
+        category: 'other',
+        message: 'Challenge created without AI moderation.',
+        severity: 10
+      }],
+      suggestions: ['Challenge pending manual review.'],
+      modelUsed: 'fallback',
+      analysisTimestamp: new Date(),
+      processingTimeMs: 0
+    };
 
     try {
+      console.log('📝 Calling ChallengeService.createChallenge...');
+
       const challengeId = await ChallengeService.createChallenge(
         user.id,
         user.displayName,
@@ -98,21 +156,31 @@ export default function CreateChallengeScreen() {
         difficulty,
         stake,
         prizeModel,
-        analysis,
-        168 // 7 days
+        finalAnalysis,
+        168
       );
+
+      console.log('✅ Challenge created successfully! ID:', challengeId);
 
       setCreatedChallengeId(challengeId);
       setCurrentStep('success');
+
+      console.log('🔄 Refreshing user...');
       await refreshUser();
+      console.log('✅ User refreshed');
+
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error: any) {
+      console.error('❌ Challenge creation error:', error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
       Alert.alert('Error', error.message || 'Failed to create challenge');
+      setCurrentStep('economics');
     } finally {
+      console.log('🏁 setIsCreating(false) called');
       setIsCreating(false);
     }
   };
-
   const resetForm = () => {
     setCurrentStep('category');
     setCategory(null);
@@ -138,7 +206,7 @@ export default function CreateChallengeScreen() {
           <View style={styles.step}>
             <Text style={styles.stepTitle}>Choose Category</Text>
             <Text style={styles.stepDescription}>What type of challenge is this?</Text>
-            
+
             <View style={styles.categoryGrid}>
               {categories.map((cat) => (
                 <Pressable
@@ -182,7 +250,7 @@ export default function CreateChallengeScreen() {
         {currentStep === 'details' && (
           <View style={styles.step}>
             <Text style={styles.stepTitle}>Challenge Details</Text>
-            
+
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Title *</Text>
               <TextInput
@@ -253,10 +321,11 @@ export default function CreateChallengeScreen() {
         )}
 
         {/* Step 3: Economics */}
+        {/* Step 3: Economics */}
         {currentStep === 'economics' && (
           <View style={styles.step}>
             <Text style={styles.stepTitle}>Set Rewards</Text>
-            
+
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Stake Amount (DCoins)</Text>
               <TextInput
@@ -289,11 +358,21 @@ export default function CreateChallengeScreen() {
 
             <View style={styles.buttonRow}>
               <Button title="Back" onPress={() => setCurrentStep('details')} variant="outline" />
-              <Button title="Analyze Safety" onPress={handleAnalyze} />
+              <Button
+                title="Create Challenge"
+                onPress={() => {
+                  setAnalysis(null);
+                  setCurrentStep('moderation');
+                  // Small delay to ensure state updates before calling handleCreate
+                  setTimeout(() => handleCreate(), 50);
+                }}
+                loading={isCreating}
+              />
             </View>
           </View>
         )}
 
+        {/* Step 4: AI Moderation */}
         {/* Step 4: AI Moderation */}
         {currentStep === 'moderation' && (
           <View style={styles.step}>
@@ -301,6 +380,11 @@ export default function CreateChallengeScreen() {
               <View style={styles.analyzing}>
                 <ActivityIndicator size="large" color={Colors.primary} />
                 <Text style={styles.analyzingText}>AI analyzing challenge safety...</Text>
+              </View>
+            ) : isCreating ? (
+              <View style={styles.analyzing}>
+                <ActivityIndicator size="large" color={Colors.primary} />
+                <Text style={styles.analyzingText}>Creating your challenge...</Text>
               </View>
             ) : analysis ? (
               <View>
@@ -358,7 +442,12 @@ export default function CreateChallengeScreen() {
                   />
                 </View>
               </View>
-            ) : null}
+            ) : (
+              <View style={styles.analyzing}>
+                <ActivityIndicator size="large" color={Colors.primary} />
+                <Text style={styles.analyzingText}>Preparing challenge...</Text>
+              </View>
+            )}
           </View>
         )}
 

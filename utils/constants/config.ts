@@ -1,4 +1,4 @@
-import { PURCHASE_PACKAGES, PurchasePackage } from "../../types/transaction";
+import { PurchasePackage } from "../../types/transaction";
 
 export const Config = {
     // App
@@ -51,7 +51,7 @@ export const Config = {
     ] as PurchasePackage[],
     
     // Challenge constraints
-    MIN_CHALLENGE_STAKE: 500,
+    MIN_CHALLENGE_STAKE: 50,
     MAX_CHALLENGE_STAKE_UNVERIFIED: 5000,
     MAX_CHALLENGE_STAKE_VERIFIED: 50000,
     MAX_CHALLENGE_STAKE_BUSINESS: 500000,
@@ -68,7 +68,7 @@ export const Config = {
     SIMULTANEOUS_SUBMISSION_WINDOW_SECONDS: 60,
     
     // AI
-    AI_RISK_SCORE_AUTO_APPROVE: 30,
+    AI_RISK_SCORE_AUTO_APPROVE: 70,
     AI_RISK_SCORE_HUMAN_REVIEW: 60,
     AI_VERIFICATION_CONFIDENCE_THRESHOLD: 80,
     

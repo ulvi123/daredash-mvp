@@ -13,7 +13,7 @@ export type ChallengeCategory =
 export type ChallengeDifficulty = 1 | 2 | 3 | 4 | 5;
 
 export type ChallengeStatus =
-    | 'pending+moderation'
+    | 'pending_moderation'
     | 'rejected'
     | 'active'
     | 'in_progress'

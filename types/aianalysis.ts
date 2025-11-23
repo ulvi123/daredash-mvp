@@ -16,6 +16,27 @@ export interface AIAnalysis {
     processingTimeMs: number;
 }
 
+declare const analysis: AIAnalysis | undefined;
+
+const finalAnalysis: AIAnalysis = analysis || {
+     approved: false,
+     overallRiskScore: 100,
+     physicalSafetyScore: 100,      // Add these
+     legalComplianceScore: 100,      // Add these
+     socialAppropriatenessScore: 100, // Add these
+     privacyConcernsScore: 100,      // Add these
+     flags: [{ 
+       type: 'danger',
+       category: 'other',             // Add this
+       message: 'AI moderation service unavailable.',
+       severity: 10                   // Add this
+     }],
+     suggestions: ['Challenge created for manual review.'],
+     modelUsed: 'fallback',           // Add this
+     analysisTimestamp: new Date(),   // Add this
+     processingTimeMs: 0              // Add this
+   };
+
 
 export interface RiskFlag {
     type: 'danger' | 'warning' | 'info';

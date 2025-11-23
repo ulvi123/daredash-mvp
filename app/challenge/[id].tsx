@@ -1,23 +1,22 @@
-import { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
+import { format, formatDistanceToNow } from 'date-fns';
+import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useAuth } from '../../contexts/AuthContext';
-import { Colors, Spacing, BorderRadius } from '../../utils/constants/themes';
-import { Challenge } from '../../types/challenges';
-import { ChallengeService } from '../../services/firebase/challenge.service';
-import { ModerationService } from '../../services/ai/moderations.service';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import Button from '../../components/common/Button';
-import { formatDistanceToNow, format } from 'date-fns';
-import * as Haptics from 'expo-haptics';
+import { useAuth } from '../../contexts/AuthContext';
+import { ChallengeService } from '../../services/firebase/challenge.service';
+import { Challenge } from '../../types/challenges';
+import { BorderRadius, Colors, Spacing } from '../../utils/constants/themes';
 
 export default function ChallengeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -313,7 +312,7 @@ export default function ChallengeDetailScreen() {
           >
             <View style={styles.bottomBarContent}>
               <View style={styles.bottomBarInfo}>
-                <Text style={styles.bottomBarLabel}>You'll Win</Text>
+                <Text style={styles.bottomBarLabel}>You will Win</Text>
                 <Text style={styles.bottomBarValue}>{challenge.prizePool} DC</Text>
               </View>
               <Button
