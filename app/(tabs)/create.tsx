@@ -1,5 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -21,10 +22,18 @@ import { ChallengeCategory, ChallengeDifficulty, PrizeModel } from '../../types/
 import { Config } from '../../utils/constants/config';
 import { BorderRadius, Colors, Spacing } from '../../utils/constants/themes';
 
+
+
+
+
+
+
+
 type Step = 'category' | 'details' | 'economics' | 'moderation' | 'success';
 
 export default function CreateChallengeScreen() {
   const { user, refreshUser } = useAuth();
+  const router = useRouter()
 
   // Form state
   const [currentStep, setCurrentStep] = useState<Step>('category');
@@ -125,7 +134,7 @@ export default function CreateChallengeScreen() {
     console.log('🔄 setIsCreating(true) called');
 
     const finalAnalysis: AIAnalysis = analysis || {
-      approved: false,
+      approved: true,
       overallRiskScore: 29,
       physicalSafetyScore: 100,
       legalComplianceScore: 100,
@@ -190,6 +199,10 @@ export default function CreateChallengeScreen() {
     setStakeAmount('1000');
     setAnalysis(null);
     setCreatedChallengeId(null);
+  };
+
+  const handleGoToFeed = () => {
+    router.push('/(tabs)');  // Navigate to home/feed
   };
 
   return (
