@@ -1,31 +1,37 @@
-import { View, Text, StyleSheet, Image, FlatList, Dimensions, ScrollView, Pressable } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useAuth } from '../../contexts/AuthContext';
-import { Colors, Spacing, BorderRadius } from '../../utils/constants/themes';
 import { format } from 'date-fns';
-import { db } from '../../services/firebase/config';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router'; // Add this import
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
+import { Dimensions, FlatList, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useAuth } from '../../contexts/AuthContext';
 import { Collections } from '../../services/firebase/collections';
+import { db } from '../../services/firebase/config';
+import { BorderRadius, Colors, Spacing } from '../../utils/constants/themes';
+
 
 const { width } = Dimensions.get('window');
 
 const ProfileScreen = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();  // Add signOut here
+  const router = useRouter();  // Add router
   const [userCompletions, setUserCompletions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+
 
   useEffect(() => {
     loadUserCompletions();
-  }, []);
+  });
 
   const loadUserCompletions = async () => {
-    if (!user?.uid) return;
+    if (!user?.id) return;  // Changed from user?.uid to user?.id
 
     try {
       const q = query(
         collection(db, Collections.COMPLETIONS),
-        where('userId', '==', user.uid)
+        where('userId', '==', user.id)  // Changed from user.uid to user.id
       );
       const snapshot = await getDocs(q);
       const data = snapshot.docs.map(doc => ({
@@ -41,17 +47,91 @@ const ProfileScreen = () => {
     }
   };
 
+  // Add logout handler
+  const handleLogout = () => {
+    console.log("⚠️ LOGOUT MODAL OPENED");
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
+    console.log("🟡 Logout pressed");
+
+    try {
+      await signOut();
+      console.log("🟢 Firebase signed out");
+
+      router.replace("/login");
+      console.log("🔵 Redirected");
+    } catch (err) {
+      console.error("🔴 Logout error:", err);
+    }
+  };
+
+
+
   const totalRewards = userCompletions.reduce((sum, c) => sum + (c.rewardAmount || 0), 0);
 
   return (
     <LinearGradient colors={[Colors.background, Colors.surface]} style={styles.container}>
+
+      {/* --- LOGOUT MODAL (Step 4) --- */}
+      {showLogoutModal && (
+        <View style={{
+          position: "absolute",
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: "rgba(0,0,0,0.5)",
+          justifyContent: "center",
+          alignItems: "center",
+          padding: 20,
+          zIndex: 999,
+        }}>
+          <View style={{
+            backgroundColor: "#fff",
+            padding: 20,
+            borderRadius: 16,
+            width: "90%",
+            maxWidth: 350,
+          }}>
+            <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>
+              Log Out
+            </Text>
+
+            <Text style={{ marginBottom: 20 }}>
+              Are you sure you want to log out?
+            </Text>
+
+            <TouchableOpacity
+              onPress={confirmLogout}
+              style={{
+                backgroundColor: "red",
+                padding: 12,
+                alignItems: "center",
+                borderRadius: 10,
+                marginBottom: 10,
+              }}>
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>Log Out</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setShowLogoutModal(false)}
+              style={{
+                backgroundColor: "#ddd",
+                padding: 12,
+                alignItems: "center",
+                borderRadius: 10,
+              }}>
+              <Text style={{ fontWeight: "bold" }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+      {/* --- END MODAL --- */}
+
+
       {/* Header Section */}
       <View style={styles.header}>
         <View style={styles.avatarContainer}>
-          <LinearGradient
-            colors={[Colors.primary, Colors.accent]}
-            style={styles.avatarBorder}
-          >
+          <LinearGradient colors={[Colors.primary, Colors.accent]} style={styles.avatarBorder}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
                 {user?.displayName?.charAt(0).toUpperCase() || 'U'}
@@ -63,7 +143,7 @@ const ProfileScreen = () => {
         <View style={styles.userInfo}>
           <Text style={styles.userName}>{user?.displayName || 'Anonymous User'}</Text>
           <Text style={styles.userSince}>
-            Joined {format(user?.metadata?.creationTime ? new Date(user.metadata.creationTime) : new Date(), 'MMM yyyy')}
+            Joined {format(user?.createdAt || new Date(), 'MMM yyyy')}
           </Text>
         </View>
       </View>
@@ -71,63 +151,93 @@ const ProfileScreen = () => {
       {/* Stats Section */}
       <View style={styles.statsContainer}>
         <View style={styles.statCard}>
-          <Text style={styles.statValue}>{userCompletions.length}</Text>
+          <Text style={styles.statValue}>{user?.challengesCompleted || 0}</Text>
           <Text style={styles.statLabel}>Completions</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statValue}>{totalRewards}</Text>
+          <Text style={styles.statValue}>{user?.dcoinsLifeTimeEarned || 0}</Text>
           <Text style={styles.statLabel}>DC Earned</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statValue}>98%</Text>
-          <Text style={styles.statLabel}>Verification Rate</Text>
+          <Text style={styles.statValue}>{user?.reputation || 0}</Text>
+          <Text style={styles.statLabel}>Reputation</Text>
         </View>
+      </View>
+
+      {/* Balance Card */}
+      <View style={styles.balanceCard}>
+        <Text style={styles.balanceLabel}>Current Balance</Text>
+        <View style={styles.balanceRow}>
+          <Text style={styles.balanceEmoji}>🪙</Text>
+          <Text style={styles.balanceValue}>{user?.dcoins || 0} DC</Text>
+        </View>
+        <Pressable
+          style={styles.addFundsButton}
+          onPress={() => router.push('/purchase-tokens')}
+        >
+          <Text style={styles.addFundsText}>+ Add DCoins</Text>
+        </Pressable>
       </View>
 
       {/* Recent Completions */}
       <Text style={styles.sectionTitle}>Recent Completions</Text>
 
-      <FlatList
-        data={userCompletions}
-        horizontal
-        keyExtractor={(item) => item.id}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: Spacing.lg }}
-        renderItem={({ item }) => (
-          <View style={styles.completionCard}>
-            <LinearGradient
-              colors={[Colors.surface, Colors.background]}
-              style={styles.completionGradient}
-            >
-              <View style={styles.completionIconContainer}>
-                <Text style={styles.completionIcon}>🎥</Text>
-              </View>
-              <Text style={styles.completionTitle} numberOfLines={1}>
-                {item.caption || 'Untitled Completion'}
-              </Text>
-              <Text style={styles.completionDate}>
-                {format(item.submittedAt, 'MMM d, yyyy')}
-              </Text>
-              <View style={styles.completionReward}>
-                <Text style={styles.rewardEmoji}>🪙</Text>
-                <Text style={styles.rewardText}>{item.rewardAmount || 0} DC</Text>
-              </View>
-            </LinearGradient>
-          </View>
-        )}
-      />
+      {userCompletions.length > 0 ? (
+        <FlatList
+          data={userCompletions}
+          horizontal
+          keyExtractor={(item) => item.id}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: Spacing.lg }}
+          renderItem={({ item }) => (
+            <View style={styles.completionCard}>
+              <LinearGradient
+                colors={[Colors.surface, Colors.background]}
+                style={styles.completionGradient}
+              >
+                <View style={styles.completionIconContainer}>
+                  <Text style={styles.completionIcon}>🎥</Text>
+                </View>
+                <Text style={styles.completionTitle} numberOfLines={1}>
+                  {item.caption || 'Untitled Completion'}
+                </Text>
+                <Text style={styles.completionDate}>
+                  {format(item.submittedAt, 'MMM d, yyyy')}
+                </Text>
+                <View style={styles.completionReward}>
+                  <Text style={styles.rewardEmoji}>🪙</Text>
+                  <Text style={styles.rewardText}>{item.rewardAmount || 0} DC</Text>
+                </View>
+              </LinearGradient>
+            </View>
+          )}
+        />
+      ) : (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>No completions yet</Text>
+          <Text style={styles.emptySubtext}>
+            Start completing challenges to see them here!
+          </Text>
+        </View>
+      )}
 
       {/* Edit Profile / Settings */}
       <View style={styles.bottomButtons}>
         <Pressable style={styles.button}>
           <Text style={styles.buttonText}>Edit Profile</Text>
         </Pressable>
-        <Pressable style={[styles.button, styles.secondaryButton]}>
+
+        <TouchableOpacity
+          style={[styles.button, styles.secondaryButton]}
+          onPress={handleLogout}
+        >
           <Text style={styles.secondaryButtonText}>Log Out</Text>
-        </Pressable>
+        </TouchableOpacity>
       </View>
+
     </LinearGradient>
   );
+
 };
 
 export default ProfileScreen;
@@ -139,6 +249,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     paddingVertical: Spacing.xl,
+    paddingTop: 60,  // Add top padding for status bar
   },
   avatarContainer: {
     marginBottom: Spacing.md,
@@ -199,6 +310,44 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     marginTop: 2,
   },
+  balanceCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.lg,
+    alignItems: 'center',
+  },
+  balanceLabel: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.sm,
+  },
+  balanceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  balanceEmoji: {
+    fontSize: 32,
+    marginRight: Spacing.sm,
+  },
+  balanceValue: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: Colors.primary,
+  },
+  addFundsButton: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
+  },
+  addFundsText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.text,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
@@ -246,9 +395,26 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.success,
   },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: Spacing.xxl,
+    paddingHorizontal: Spacing.lg,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+    marginBottom: Spacing.xs,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: Colors.textMuted,
+    textAlign: 'center',
+  },
   bottomButtons: {
     marginTop: Spacing.xl,
     paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.xl,
   },
   button: {
     backgroundColor: Colors.primary,
@@ -265,11 +431,11 @@ const styles = StyleSheet.create({
   secondaryButton: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: Colors.textSecondary,
+    borderColor: Colors.danger,
   },
   secondaryButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: Colors.textSecondary,
+    color: Colors.danger,
   },
 });

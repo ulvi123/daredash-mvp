@@ -1,7 +1,7 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../services/firebase/config';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { AuthService } from '../services/firebase/auth.service';
+import { auth } from '../services/firebase/config';
 import { User, UserRole } from '../types';
 
 interface AuthContextType {
@@ -21,22 +21,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        try {
-          const userData = await AuthService.getCurrentUser();
-          setUser(userData);
-        } catch (error) {
-          console.error('Error loading user:', error);
+
+      if (!firebaseUser) {
+        console.log("Auth state: logged out");
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const userData = await AuthService.getCurrentUser();
+
+        // ⛔ Prevent restoring user during logout race condition
+        if (!auth.currentUser) {
+          console.log("Ignored stale user after logout");
           setUser(null);
+          setLoading(false);
+          return;
         }
-      } else {
+
+        console.log("Auth state: logged in");
+        setUser(userData);
+      } catch (error) {
+        console.error("Error loading user:", error);
         setUser(null);
       }
-      setLoading(false);
+
+      setLoading(false); // ← YOU WERE MISSING THIS
     });
 
     return unsubscribe;
   }, []);
+
 
   const signIn = async (email: string, password: string) => {
     const userData = await AuthService.signIn(email, password);
@@ -56,8 +72,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    await AuthService.signOut();
     setUser(null);
+    await AuthService.signOut();
   };
 
   const refreshUser = async () => {

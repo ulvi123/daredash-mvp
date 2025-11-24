@@ -465,6 +465,7 @@ export default function CreateChallengeScreen() {
         )}
 
         {/* Step 5: Success */}
+        {/* Step 5: Success */}
         {currentStep === 'success' && (
           <View style={styles.step}>
             <View style={styles.successCard}>
@@ -483,7 +484,24 @@ export default function CreateChallengeScreen() {
                   <Text style={styles.successStatLabel}>Prize Pool</Text>
                 </View>
               </View>
-              <Button title="Create Another" onPress={resetForm} fullWidth />
+
+              {/* Replace this single button: */}
+              {/* <Button title="Create Another" onPress={resetForm} fullWidth /> */}
+
+              {/* With these two buttons: */}
+              <View style={styles.successButtons}>
+                <Button
+                  title="View in Feed"
+                  onPress={handleGoToFeed}
+                  fullWidth
+                />
+                <Button
+                  title="Create Another"
+                  onPress={resetForm}
+                  variant="outline"
+                  fullWidth
+                />
+              </View>
             </View>
           </View>
         )}
@@ -778,4 +796,9 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     marginTop: 4,
   },
+    successButtons: {
+    width: '100%',
+    gap: Spacing.md,
+    marginTop: Spacing.md,
+  }
 });
