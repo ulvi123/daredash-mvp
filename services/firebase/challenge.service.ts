@@ -168,25 +168,20 @@ export class ChallengeService {
     limitCount: number = 20
   ): Promise<Challenge[]> {
     try {
-      let q = query(
-        collection(db, Collections.CHALLENGES),
+      const constraints = [
         where("status", "==", "active"),
         orderBy("createdAt", "desc"),
-        limit(limitCount)
-      );
-
+        limit(limitCount),
+      ];
+  
       if (categoryFilter) {
-        q = query(
-          collection(db, Collections.CHALLENGES),
-          where("status", "==", "active"),
-          where("category", "==", categoryFilter),
-          orderBy("createdAt", "desc"),
-          limit(limitCount)
-        );
+        constraints.unshift(where("category", "==", categoryFilter));
       }
-
+  
+      const q = query(collection(db, Collections.CHALLENGES), ...constraints);
+  
       const snapshot = await getDocs(q);
-
+  
       return snapshot.docs.map((doc) =>
         this.formatChallenge(doc.id, doc.data())
       );
@@ -195,6 +190,7 @@ export class ChallengeService {
       return [];
     }
   }
+  
 
   /**
    * Get challenges created by user

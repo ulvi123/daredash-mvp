@@ -58,6 +58,10 @@ export default function ChallengeDetailScreen() {
       Alert.alert('Oops!', 'You cannot accept your own challenge');
       return;
     }
+    // if (challenge.status !== 'active' || new Date(challenge.expiresAt) < new Date()) {
+    //   Alert.alert("Challenge expired or unavailable");
+    //   return;
+    // }
 
     Alert.alert(
       'Accept Challenge?',
@@ -74,8 +78,8 @@ export default function ChallengeDetailScreen() {
               Alert.alert(
                 'Challenge Accepted! 🎯',
                 'Good luck! Submit your proof when ready.',
-                [{ 
-                  text: 'OK', 
+                [{
+                  text: 'OK',
                   onPress: () => router.push({
                     pathname: '/complete/[id]',
                     params: { id: challenge.id }
@@ -274,7 +278,7 @@ export default function ChallengeDetailScreen() {
               />
             </View>
 
-            {challenge.aiAnalysis.flags.length > 0 && (
+            {challenge.aiAnalysis?.flags?.length > 0 && (
               <View style={styles.flagsSection}>
                 <Text style={styles.flagsTitle}>Flags:</Text>
                 {challenge.aiAnalysis.flags.map((flag, index) => (

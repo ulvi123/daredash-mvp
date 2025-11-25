@@ -31,6 +31,8 @@ export type PrizeModel =
 
 
 export interface Challenge {
+    thumbnail: any;
+    coverImage: any;
     id: string;
 
     //Creator info
