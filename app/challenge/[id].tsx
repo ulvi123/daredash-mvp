@@ -1,7 +1,7 @@
 import { format, formatDistanceToNow } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -17,15 +17,22 @@ import { useAuth } from '../../contexts/AuthContext';
 import { ChallengeService } from '../../services/firebase/challenge.service';
 import { Challenge } from '../../types/challenges';
 import { BorderRadius, Colors, Spacing } from '../../utils/constants/themes';
+import { navigate } from 'expo-router/build/global-state/routing';
+
 
 export default function ChallengeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
   const router = useRouter();
-
+  const navigate = useNavigation();
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [loading, setLoading] = useState(true);
   const [accepting, setAccepting] = useState(false);
+
+  const isAlreadyAccepted = challenge && challenge.acceptedBy !== null && challenge.acceptedBy !== undefined;
+  const isAcceptedByCurrentUser = challenge && challenge.acceptedBy === user?.id;
+
+  
 
   useEffect(() => {
     loadChallenge();
@@ -36,13 +43,10 @@ export default function ChallengeDetailScreen() {
 
     try {
       setLoading(true);
-      const data = await ChallengeService.getChallengeById(id);
-      setChallenge(data);
+      await ChallengeService.incrementViews(id);
+      const updated = await ChallengeService.getChallengeById(id);
+      setChallenge(updated);
 
-      // Increment view count
-      if (data) {
-        await ChallengeService.incrementViews(id);
-      }
     } catch (error) {
       console.error('Error loading challenge:', error);
       Alert.alert('Error', 'Failed to load challenge');
@@ -52,51 +56,62 @@ export default function ChallengeDetailScreen() {
   };
 
   const handleAcceptChallenge = async () => {
-    if (!challenge || !user) return;
-
-    if (challenge.creatorId === user.id) {
-      Alert.alert('Oops!', 'You cannot accept your own challenge');
+    console.log('🔘 Accept button clicked!');
+    console.log('Challenge:', challenge?.id);
+    console.log('User:', user?.id);
+    
+    if (!challenge || !user) {
+      console.log('❌ Missing challenge or user:', { challenge: !!challenge, user: !!user });
+      Alert.alert('Error', 'Missing challenge or user data');
       return;
     }
-    // if (challenge.status !== 'active' || new Date(challenge.expiresAt) < new Date()) {
-    //   Alert.alert("Challenge expired or unavailable");
-    //   return;
-    // }
-
-    Alert.alert(
-      'Accept Challenge?',
-      `You're about to accept this challenge. You'll have 24 hours to complete it and submit proof.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Accept',
-          onPress: async () => {
-            try {
-              setAccepting(true);
-              await ChallengeService.acceptChallenge(challenge.id, user.id);
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              Alert.alert(
-                'Challenge Accepted! 🎯',
-                'Good luck! Submit your proof when ready.',
-                [{
-                  text: 'OK',
-                  onPress: () => router.push({
-                    pathname: '/complete/[id]',
-                    params: { id: challenge.id }
-                  } as any)
-                }]
-              );
-            } catch (error: any) {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-              Alert.alert('Error', error.message || 'Failed to accept challenge');
-            } finally {
-              setAccepting(false);
-            }
-          },
-        },
-      ]
+  
+    // Using window.confirm for web compatibility
+    const confirmed = window.confirm(
+      "Accept Challenge?\n\nYou're about to accept this challenge. You have 24 hours to complete it."
     );
+  
+    if (!confirmed) {
+      console.log('❌ User cancelled');
+      return;
+    }
+  
+    try {
+      console.log('✅ User confirmed acceptance');
+      console.log('🚀 Starting challenge acceptance...');
+      setAccepting(true);
+      
+      console.log('📞 Calling ChallengeService.acceptChallenge with:', {
+        challengeId: challenge.id,
+        userId: user.id
+      });
+      
+      await ChallengeService.acceptChallenge(challenge.id, user.id);
+      console.log('✅ Challenge accepted successfully');
+      
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      console.log('🎯 Navigating to stream tab...');
+      
+      router.replace('/(tabs)/stream');
+      console.log('✅ Navigation called');
+      
+    } catch (error: any) {
+      console.error('❌ Error accepting challenge:', error);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        name: error.name
+      });
+      
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert("Error", error.message || "Failed to accept challenge");
+    } finally {
+      console.log('🏁 Accept process finished');
+      setAccepting(false);
+    }
   };
+
+
 
   if (loading) {
     return (
@@ -320,7 +335,7 @@ export default function ChallengeDetailScreen() {
                 <Text style={styles.bottomBarValue}>{challenge.prizePool} DC</Text>
               </View>
               <Button
-                title="Accept Challenge"
+                title={accepting ? "Accepting..." : "Accept Challenge"}
                 onPress={handleAcceptChallenge}
                 loading={accepting}
                 icon="🎯"
@@ -330,6 +345,20 @@ export default function ChallengeDetailScreen() {
           </LinearGradient>
         </View>
       )}
+
+      
+
+      {/* Show if already accepted by someone else */}
+      {isAlreadyAccepted && !isAcceptedByCurrentUser && (
+        <View style={styles.bottomBar}>
+          <View style={[styles.bottomBarContent, styles.acceptedBar]}>
+            <Text style={styles.acceptedText}>
+              ⏳ Challenge already accepted by someone else
+            </Text>
+          </View>
+        </View>
+      )}
+
 
       {isCreator && (
         <View style={styles.bottomBar}>
@@ -702,6 +731,46 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: Colors.textSecondary,
+    textAlign: 'center',
+  },
+  acceptedBar: {
+    backgroundColor: Colors.warning + '20',
+    padding: Spacing.lg,
+    justifyContent: 'center',
+    borderTopWidth: 1,
+    borderTopColor: Colors.warning,
+  },
+  acceptedText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.warning,
+    textAlign: 'center',
+  },
+  yourChallengeBar: {
+    backgroundColor: Colors.success + '20',
+    padding: Spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: Colors.success,
+  },
+  yourChallengeText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.success,
+  },
+  expiredBar: {
+    backgroundColor: Colors.danger + '20',
+    padding: Spacing.lg,
+    justifyContent: 'center',
+    borderTopWidth: 1,
+    borderTopColor: Colors.danger,
+  },
+  expiredText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.danger,
     textAlign: 'center',
   },
 });

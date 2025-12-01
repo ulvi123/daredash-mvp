@@ -15,6 +15,8 @@ import { db } from '../../services/firebase/config';
 import { Collections } from '../../services/firebase/collections';
 import Button from '../../components/common/Button';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 export default function StreamScreen() {
   const { user } = useAuth();
@@ -22,16 +24,29 @@ export default function StreamScreen() {
   const [acceptedChallenges, setAcceptedChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadAcceptedChallenges();
-  }, [user]);
+  useFocusEffect(
+    useCallback(() => {
+      // Wait for user to be available
+      if (user?.id) {
+        loadAcceptedChallenges();
+      } else {
+        console.log('⏳ Waiting for user auth state...');
+        setLoading(false); // Don't show loading forever if no user
+      }
+    }, [user?.id]) // 👈 Depend on user.id specifically
+  );
 
   const loadAcceptedChallenges = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('❌ No user found');
+      return;
+    }
+
 
     try {
+      console.log('🔄 Loading accepted challenges for user:', user.id);
       setLoading(true);
-      
+
       // Get challenges accepted by current user
       const q = query(
         collection(db, Collections.CHALLENGES),
@@ -39,22 +54,38 @@ export default function StreamScreen() {
         where('status', '==', 'in_progress')
       );
 
+      console.log('📡 Executing Firestore query...');
       const snapshot = await getDocs(q);
-      const data = snapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id,
-        createdAt: doc.data().createdAt?.toDate() || new Date(),
-        expiresAt: doc.data().expiresAt?.toDate() || new Date(),
-        acceptedAt: doc.data().acceptedAt?.toDate(),
-        aiAnalysis: {
-          ...doc.data().aiAnalysis,
-          analysisTimestamp: doc.data().aiAnalysis?.analysisTimestamp?.toDate() || new Date(),
-        },
-      })) as Challenge[];
+      console.log('✅ Query successful, found:', snapshot.docs.length, 'challenges');
+
+      const data = snapshot.docs.map(doc => {
+        console.log('📄 Processing challenge:', doc.id);
+        return {
+          ...doc.data(),
+          id: doc.id,
+          createdAt: doc.data().createdAt?.toDate() || new Date(),
+          expiresAt: doc.data().expiresAt?.toDate() || new Date(),
+          acceptedAt: doc.data().acceptedAt?.toDate(),
+          aiAnalysis: {
+            ...doc.data().aianalysis,
+            analysisTimestamp: doc.data().aianalysis?.analysisTimestamp?.toDate() || new Date(),
+          },
+        };
+      }) as Challenge[];
+
+      console.log('✅ Processed challenges:', data.length);
 
       setAcceptedChallenges(data);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('❌ Error loading accepted challenges:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
       console.error('Error loading accepted challenges:', error);
+
+      Alert.alert(
+        'Error Loading Challenges',
+        error.message || 'Failed to load your challenges. Please try again.'
+      );
     } finally {
       setLoading(false);
     }

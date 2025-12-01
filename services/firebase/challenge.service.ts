@@ -1,25 +1,26 @@
 import {
-    addDoc,
-    collection,
-    doc,
-    getDoc,
-    getDocs,
-    limit,
-    orderBy,
-    query,
-    serverTimestamp,
-    Timestamp,
-    updateDoc,
-    where,
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  serverTimestamp,
+  Timestamp,
+  updateDoc,
+  where,
+  increment
 } from "firebase/firestore";
 
 import { AIAnalysis } from "../../types/aianalysis";
 import {
-    Challenge,
-    ChallengeCategory,
-    ChallengeDifficulty,
-    ChallengeStatus,
-    PrizeModel,
+  Challenge,
+  ChallengeCategory,
+  ChallengeDifficulty,
+  ChallengeStatus,
+  PrizeModel,
 } from "../../types/challenges";
 import { Config } from "../../utils/constants/config";
 import { Collections } from "./collections";
@@ -173,15 +174,15 @@ export class ChallengeService {
         orderBy("createdAt", "desc"),
         limit(limitCount),
       ];
-  
+
       if (categoryFilter) {
         constraints.unshift(where("category", "==", categoryFilter));
       }
-  
+
       const q = query(collection(db, Collections.CHALLENGES), ...constraints);
-  
+
       const snapshot = await getDocs(q);
-  
+
       return snapshot.docs.map((doc) =>
         this.formatChallenge(doc.id, doc.data())
       );
@@ -190,7 +191,7 @@ export class ChallengeService {
       return [];
     }
   }
-  
+
 
   /**
    * Get challenges created by user
@@ -227,6 +228,8 @@ export class ChallengeService {
     userId: string
   ): Promise<void> {
     try {
+      console.log('🎯 Accepting challenge:', { challengeId, userId });
+
       const challengeRef = await doc(db, Collections.CHALLENGES, challengeId);
       const challengeDoc = await getDoc(challengeRef);
 
@@ -235,6 +238,11 @@ export class ChallengeService {
       }
 
       const challenge = challengeDoc.data();
+      console.log('📄 Current challenge data:', {
+        status: challenge.status,
+        creatorId: challenge.creatorId,
+        acceptedBy: challenge.acceptedBy,
+      });
 
       if (challenge.status !== "active") {
         throw new Error("Challenge is not active");
@@ -249,14 +257,22 @@ export class ChallengeService {
       }
 
       //updating challenge status:
-      await updateDoc(challengeRef, {
+      const updateData = {
         status: "in_progress",
         acceptedBy: userId,
         acceptedAt: serverTimestamp(),
-        attempts: challenge.attempts + 1,
-      });
+        attempts: (challenge.attempts || 0) + 1
+      };
+
+      console.log('✍️ Updating challenge with:', updateData);
+      await updateDoc(challengeRef, updateData);
+      console.log('✅ Challenge updated successfully');
+
     } catch (error: any) {
       console.error("Error accepting challenge: ", error);
+      console.error("❌ Error accepting challenge:", error);
+      console.error("Error code:", error.code);
+      console.error("Error message:", error.message);
       throw new Error(error.message || "Failed to accept challenge");
     }
   }
@@ -266,14 +282,8 @@ export class ChallengeService {
    */
   static async incrementViews(challengeId: string): Promise<void> {
     try {
-      const challengeRef = doc(db, Collections.CHALLENGES, challengeId);
-      const challengeDoc = await getDoc(challengeRef);
-
-      if (challengeDoc.exists()) {
-        await updateDoc(challengeRef, {
-          views: (challengeDoc.data().views || 0) + 1,
-        });
-      }
+      const ref = doc(db, Collections.CHALLENGES, challengeId);
+      await updateDoc(ref, { views: increment(1) });
     } catch (error) {
       console.error("Error incrementing views:", error);
     }
@@ -292,9 +302,9 @@ export class ChallengeService {
       expiresAt: data.expiresAt?.toDate() || new Date(),
       acceptedAt: data.acceptedAt?.toDate() || undefined,
       aiAnalysis: {
-        ...data.aiAnalysis,
+        ...data.aianalysis,
         analysisTimestamp:
-          data.aiAnalysis?.analysisTimestamp?.toDate() || new Date(),
+          data.aianalysis?.analysisTimestamp?.toDate() || new Date(),
       },
     } as Challenge;
   }
