@@ -13,14 +13,15 @@ export type ChallengeCategory =
 export type ChallengeDifficulty = 1 | 2 | 3 | 4 | 5;
 
 export type ChallengeStatus =
-    | 'pending_moderation'
-    | 'rejected'
-    | 'active'
-    | 'in_progress'
-    | 'prending_verififcation'
-    | 'completed'
-    | 'expired'
-    | 'cancelled';
+  | 'pending_moderation'
+  | 'active'
+  | 'in_progress'
+  | 'pending_verification'
+  | 'completed'
+  | 'failed'
+  | 'cancelled'
+  | 'expired'
+  | 'rejected';
 
 
 export type PrizeModel =

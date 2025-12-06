@@ -11,6 +11,7 @@ export type TransactionType =
   | 'purchase'
   | 'challenge_stake'
   | 'challenge_refund'
+  | 'challenge_reward'
   | 'prize_won'
   | 'consolation'
   | 'withdrawal'

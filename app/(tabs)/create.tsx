@@ -386,7 +386,6 @@ export default function CreateChallengeScreen() {
         )}
 
         {/* Step 4: AI Moderation */}
-        {/* Step 4: AI Moderation */}
         {currentStep === 'moderation' && (
           <View style={styles.step}>
             {isAnalyzing ? (
@@ -464,7 +463,6 @@ export default function CreateChallengeScreen() {
           </View>
         )}
 
-        {/* Step 5: Success */}
         {/* Step 5: Success */}
         {currentStep === 'success' && (
           <View style={styles.step}>
