@@ -355,81 +355,81 @@ export class CompletionService {
     /**
    * Get completions for a challenge
    */
-  static async getCompletionsByChallenge(
-    challengeId: string
-  ): Promise<Completion[]> {
-    try {
-      const q = query(
-        collection(db, Collections.COMPLETIONS),
-        where('challengeId', '==', challengeId),
-        orderBy('submittedAt', 'desc')
-      );
+    static async getCompletionsByChallenge(
+        challengeId: string
+    ): Promise<Completion[]> {
+        try {
+            const q = query(
+                collection(db, Collections.COMPLETIONS),
+                where('challengeId', '==', challengeId),
+                orderBy('submittedAt', 'desc')
+            );
 
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => this.formatCompletion(doc.id, doc.data()));
-    } catch (error) {
-      console.error('Error getting completions:', error);
-      return [];
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map(doc => this.formatCompletion(doc.id, doc.data()));
+        } catch (error) {
+            console.error('Error getting completions:', error);
+            return [];
+        }
     }
-  }
 
-  /**
-   * Get completions by user
-   */
-  static async getCompletionsByUser(userId: string): Promise<Completion[]> {
-    try {
-      const q = query(
-        collection(db, Collections.COMPLETIONS),
-        where('userId', '==', userId),
-        orderBy('submittedAt', 'desc')
-      );
+    /**
+     * Get completions by user
+     */
+    static async getCompletionsByUser(userId: string): Promise<Completion[]> {
+        try {
+            const q = query(
+                collection(db, Collections.COMPLETIONS),
+                where('userId', '==', userId),
+                orderBy('submittedAt', 'desc')
+            );
 
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => this.formatCompletion(doc.id, doc.data()));
-    } catch (error) {
-      console.error('Error getting user completions:', error);
-      return [];
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map(doc => this.formatCompletion(doc.id, doc.data()));
+        } catch (error) {
+            console.error('Error getting user completions:', error);
+            return [];
+        }
     }
-  }
 
-  /**
-   * Get challenge completion count
-   */
-  private static async getChallengeCompletionCount(
-    challengeId: string
-  ): Promise<number> {
-    try {
-      const q = query(
-        collection(db, Collections.COMPLETIONS),
-        where('challengeId', '==', challengeId),
-        where('status', '==', 'paid')
-      );
-      const snapshot = await getDocs(q);
-      return snapshot.size;
-    } catch (error) {
-      return 0;
+    /**
+     * Get challenge completion count
+     */
+    private static async getChallengeCompletionCount(
+        challengeId: string
+    ): Promise<number> {
+        try {
+            const q = query(
+                collection(db, Collections.COMPLETIONS),
+                where('challengeId', '==', challengeId),
+                where('status', '==', 'paid')
+            );
+            const snapshot = await getDocs(q);
+            return snapshot.size;
+        } catch (error) {
+            return 0;
+        }
     }
-  }
 
-  /**
-   * Format Firestore document to Completion type
-   */
-  private static formatCompletion(id: string, data: any): Completion {
-    return {
-      id,
-      ...data,
-      submittedAt: data.submittedAt?.toDate() || new Date(),
-      verifiedAt: data.verifiedAt?.toDate() || undefined,
-      paidAt: data.paidAt?.toDate() || undefined,
-      aiVerification: data.aiVerification
-        ? {
-            ...data.aiVerification,
-            verificationTimestamp:
-              data.aiVerification.verificationTimestamp?.toDate() || new Date(),
-          }
-        : null,
-    } as Completion;
-  }
+    /**
+     * Format Firestore document to Completion type
+     */
+    private static formatCompletion(id: string, data: any): Completion {
+        return {
+            id,
+            ...data,
+            submittedAt: data.submittedAt?.toDate() || new Date(),
+            verifiedAt: data.verifiedAt?.toDate() || undefined,
+            paidAt: data.paidAt?.toDate() || undefined,
+            aiVerification: data.aiVerification
+                ? {
+                    ...data.aiVerification,
+                    verificationTimestamp:
+                        data.aiVerification.verificationTimestamp?.toDate() || new Date(),
+                }
+                : null,
+        } as Completion;
+    }
 
 
 

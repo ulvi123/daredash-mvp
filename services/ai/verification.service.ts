@@ -13,6 +13,27 @@ export class AIVerificationService {
     const startTime = Date.now();
 
     try {
+
+      //checking if api key exists
+      const apiKey = process.env.EXPO_PUBLIC_ANTHROPIC_KEY;
+      if (!apiKey) {
+        console.warn('⚠️ No Claude API key found - using DEMO MODE');
+        console.log('💡 In demo mode, all proofs are auto-approved');
+        return {
+          verified: true,
+          confidence: 95,
+          explanation: `Demo Mode: Challenge "${challengeTitle}" automatically verified. In production, this would use Claude AI to analyze the proof image and verify completion.`,
+          proofMatchesDescription: true,
+          noDeepfakeDetected: true,
+          timestampValid: true,
+          locationValid: true,
+          modelUsed: 'demo-mode-auto-approve',
+          verificationTimestamp: new Date(),
+          processingTimeMs: Date.now() - startTime,
+        }
+      }
+
+
       console.log('🤖 Calling Claude API for verification...');
 
       // 1. Fetch the image and convert to base64
@@ -71,7 +92,7 @@ export class AIVerificationService {
 
       // 4. Parse the response
       const verification = this.parseVerificationResponse(responseText);
-      
+
       const processingTime = Date.now() - startTime;
 
       return {
@@ -82,7 +103,7 @@ export class AIVerificationService {
       };
     } catch (error: any) {
       console.error('❌ AI Verification error:', error);
-      
+
       // Return a failed verification on error
       return {
         verified: false,
@@ -106,7 +127,7 @@ export class AIVerificationService {
     try {
       const response = await fetch(imageUrl);
       const blob = await response.blob();
-      
+
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -206,7 +227,7 @@ Respond now with ONLY the JSON object:`;
     } catch (error) {
       console.error('Error parsing verification response:', error);
       console.error('Raw response:', responseText);
-      
+
       // Return conservative defaults on parse error
       return {
         verified: false,
