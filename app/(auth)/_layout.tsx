@@ -17,9 +17,9 @@ export default function AuthLayout() {
       if (currentUser) {
         const mappedUser: User = {
             id: currentUser.uid,
-            role: "challenger", // Replace with actual role if available
-            accountTier: "free", // Replace with actual account tier if available
-            dcoins: 0, // Replace with actual dcoins if available
+            role: "challenger", 
+            accountTier: "free", 
+            dcoins: 0, 
             email: currentUser.email || "",
             displayName: currentUser.displayName || "",
             photoURL: currentUser.photoURL || "",
@@ -51,7 +51,7 @@ export default function AuthLayout() {
     const currentScreen = segments[1];
   
     if (user) {
-      // ✅ Logged in → go to main app (only if currently in auth group)
+      // ✅ Logged in
       if (inAuthGroup) {
         router.replace("/login");
       }
